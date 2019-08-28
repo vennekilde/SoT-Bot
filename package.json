@@ -1,0 +1,23 @@
+{
+  "name": "discord-botterier",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.ts",
+  "scripts": {
+    "debug": "node --inspect-brk bot-discord.js",
+    "build": "tsc -w"
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "@types/node-schedule": "^1.2.4",
+    "bufferutil": "^4.0.1",
+    "discord.js": "^11.5.1",
+    "eris": "^0.10.1",
+    "libsodium-wrappers": "^0.7.5",
+    "moment": "^2.24.0",
+    "node-schedule": "^1.3.2",
+    "opusscript": "0.0.7",
+    "typescript": "^3.5.3"
+  }
+}
