@@ -96,7 +96,9 @@ async function postEventMsg() {
         await channel.fetchMessages();
         //Delete old messages
         for(let message of channel.messages.values()) {
-            await message.delete();
+            if(!message.pinned){
+                await message.delete();
+            }
         }
 
         //Create new messages
