@@ -92,6 +92,7 @@ const emojies = [
     "NotHere:614635815255015437"
 ];
 async function postEventMsg() {
+    console.log('Posting new raid message');
     let channel = client.channels.get(raidSignupChannelId);
     if (channel instanceof Discord.TextChannel) {
         await channel.fetchMessages();
@@ -128,19 +129,27 @@ function getNextDayOfWeek(date, dayOfWeek) {
     resultDate.setDate(date.getDate() + (7 + dayOfWeek - date.getDay()) % 7);
     return resultDate;
 }
-node_schedule_1.scheduleJob("0 0 20 * * 4", () => {
+node_schedule_1.scheduleJob({ hour: 20, dayOfWeek: 4, minute: 0 }, () => {
     postEventMsg();
 });
-node_schedule_1.scheduleJob("0 0 20 * * 3", async () => {
+node_schedule_1.scheduleJob({ hour: 20, dayOfWeek: 3, minute: 0 }, () => {
     postOverview(0);
 });
-node_schedule_1.scheduleJob("0 0 20 * * 7", async () => {
+node_schedule_1.scheduleJob({ hour: 20, dayOfWeek: 7, minute: 0 }, () => {
     postOverview(1);
 });
 async function postOverview(index) {
     let channel = client.channels.get(raidSignupChannelId);
     if (channel instanceof Discord.TextChannel) {
         let messages = channel.messages.array();
+        for (let i = 0; i < messages.length; i++) {
+            if (messages[i].author.id !== client.user.id) {
+                continue;
+            }
+            if (index == 0) {
+                index = i;
+            }
+        }
         if (messages.length < index + 1) {
             return;
         }

@@ -91,6 +91,7 @@ const emojies = [
 ]
 
 async function postEventMsg() {
+    console.log('Posting new raid message')
     let channel = client.channels.get(raidSignupChannelId)
     if(channel instanceof Discord.TextChannel){
         await channel.fetchMessages();
@@ -130,13 +131,13 @@ function getNextDayOfWeek(date: Date, dayOfWeek: number) {
     return resultDate;
 }
 
-scheduleJob("0 0 20 * * 4", () => {
+scheduleJob({hour: 20, dayOfWeek: 4, minute: 0}, () => {
     postEventMsg();
 })
-scheduleJob("0 0 20 * * 3", async () => {
+scheduleJob({hour: 20, dayOfWeek: 3, minute: 0}, () => {
     postOverview(0);
 })
-scheduleJob("0 0 20 * * 7", async () => {
+scheduleJob({hour: 20, dayOfWeek: 7, minute: 0}, () => {
     postOverview(1);
 })
 
@@ -145,6 +146,14 @@ async function postOverview(index: number) {
     let channel = client.channels.get(raidSignupChannelId);
     if(channel instanceof Discord.TextChannel){
         let messages = channel.messages.array();
+        for(let i = 0; i < messages.length; i++){
+            if(messages[i].author.id !== client.user.id){
+                continue;
+            }
+            if(index == 0){
+                index = i;
+            }
+        }
         if(messages.length < index + 1){
             return;
         }
