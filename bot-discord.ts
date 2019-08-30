@@ -58,7 +58,7 @@ const events = [
     {
         message: '<@&602939206498779137>\n' +
                  '╓──────────────────────────────────╖\n' +
-                 '║ Closed raid\n'+
+                 '║ Closed raid Sunday\n'+
                  '║ Raid starts at $date\n'+
                  '╙──────────────────────────────────╜',
         date: {
@@ -69,7 +69,7 @@ const events = [
     {
         message: '<@&602939206498779137>\n' +
                  '╓──────────────────────────────────╖\n' +
-                 '║ Closed raid\n'+
+                 '║ Closed raid Wednesday\n'+
                  '║ Raid starts at $date\n'+
                  '╙──────────────────────────────────╜',
         date: {
