@@ -60,7 +60,7 @@ const events = [
     {
         message: '<@&602939206498779137>\n' +
             '╓──────────────────────────────────╖\n' +
-            '║ Closed raid\n' +
+            '║ Closed raid Sunday\n' +
             '║ Raid starts at $date\n' +
             '╙──────────────────────────────────╜',
         date: {
@@ -71,7 +71,7 @@ const events = [
     {
         message: '<@&602939206498779137>\n' +
             '╓──────────────────────────────────╖\n' +
-            '║ Closed raid\n' +
+            '║ Closed raid Wednesday\n' +
             '║ Raid starts at $date\n' +
             '╙──────────────────────────────────╜',
         date: {
@@ -129,13 +129,13 @@ function getNextDayOfWeek(date, dayOfWeek) {
     resultDate.setDate(date.getDate() + (7 + dayOfWeek - date.getDay()) % 7);
     return resultDate;
 }
-node_schedule_1.scheduleJob({ hour: 20, dayOfWeek: 4, minute: 0 }, () => {
+node_schedule_1.scheduleJob({ hour: 18, dayOfWeek: 4, minute: 0 }, () => {
     postEventMsg();
 });
-node_schedule_1.scheduleJob({ hour: 20, dayOfWeek: 3, minute: 0 }, () => {
+node_schedule_1.scheduleJob({ hour: 18, dayOfWeek: 3, minute: 0 }, () => {
     postOverview(0);
 });
-node_schedule_1.scheduleJob({ hour: 20, dayOfWeek: 7, minute: 0 }, () => {
+node_schedule_1.scheduleJob({ hour: 18, dayOfWeek: 7, minute: 0 }, () => {
     postOverview(1);
 });
 async function postOverview(index) {

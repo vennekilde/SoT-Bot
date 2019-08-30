@@ -131,13 +131,13 @@ function getNextDayOfWeek(date: Date, dayOfWeek: number) {
     return resultDate;
 }
 
-scheduleJob({hour: 20, dayOfWeek: 4, minute: 0}, () => {
+scheduleJob({hour: 18, dayOfWeek: 4, minute: 0}, () => {
     postEventMsg();
 })
-scheduleJob({hour: 20, dayOfWeek: 3, minute: 0}, () => {
+scheduleJob({hour: 18, dayOfWeek: 3, minute: 0}, () => {
     postOverview(0);
 })
-scheduleJob({hour: 20, dayOfWeek: 7, minute: 0}, () => {
+scheduleJob({hour: 18, dayOfWeek: 7, minute: 0}, () => {
     postOverview(1);
 })
 
