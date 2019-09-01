@@ -1,5 +1,6 @@
 import * as Discord  from "discord.js";
 import * as moment from "moment";
+import * as momentTimezone from "moment-timezone";
 import { scheduleJob } from "node-schedule";
 
 let client = new Discord.Client();
@@ -109,8 +110,8 @@ async function postEventMsg() {
             if(i !== 0){
                 text += '\n━━━━━━━━━━━━━━\n\n';
             }
-            let date = getNextDayOfWeek(new Date(), event.date.dayOfWeek + 1);
-            date.setHours(event.date.hour, 0, 0, 0);
+            let date = getNextDayOfWeek(momentTimezone.tz("Europe/Copenhagen"), event.date.dayOfWeek + 1);
+            date.hours(event.date.hour).minutes(0).seconds(0);
             let dateStr = moment(date).format('MMMM Do YYYY, HH:mm:ss G\\\MTZ');
             text += event.message.replace('$date', dateStr);
             text += "\n";
@@ -126,8 +127,8 @@ async function postEventMsg() {
 
 function getNextDayOfWeek(date: Date, dayOfWeek: number) {
     // Code to check that date and dayOfWeek are valid left as an exercise ;)
-    var resultDate = new Date(date.getTime());
-    resultDate.setDate(date.getDate() + (7 + dayOfWeek - date.getDay()) % 7);
+    var resultDate = moment(date);
+    resultDate.day(date.day() + (7 + dayOfWeek - date.day()) % 7);
     return resultDate;
 }
 
