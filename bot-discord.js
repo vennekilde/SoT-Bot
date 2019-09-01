@@ -19,8 +19,20 @@ client.on('messageReactionAdd', async (event, user) => {
                 if (reaction.emoji.identifier === event.emoji.identifier) {
                     continue;
                 }
-                reaction.remove(user);
+                await reaction.remove(user);
             }
+            updateWhoIsJoining(event.message);
+        }
+        return true;
+    }
+    catch (e) {
+        console.log(e);
+    }
+});
+client.on('messageReactionRemove', async (event, user) => {
+    try {
+        if (event.message.channel.id === raidSignupChannelId && user.id !== client.user.id) {
+            updateWhoIsJoining(event.message);
         }
         return true;
     }
@@ -57,6 +69,7 @@ client.on('raw', packet => {
 });
 const raidSignupChannelId = '614621107642695682';
 const raidOverviewChannelId = '614639046198689845';
+const membersRoleId = '602939206498779137';
 const events = [
     {
         message: '<@&602939206498779137>\n' +
@@ -99,7 +112,7 @@ async function postEventMsg() {
         await channel.fetchMessages();
         //Delete old messages
         for (let message of channel.messages.values()) {
-            if (!message.pinned) {
+            if (!message.pinned && message.author.id == client.user.id) {
                 await message.delete();
             }
         }
@@ -115,13 +128,23 @@ async function postEventMsg() {
             let dateStr = moment(date).format('MMMM Do YYYY, HH:mm:ss G\\\MTZ');
             text += event.message.replace('$date', dateStr);
             text += "\n";
-            let msg = await channel.send(text);
+            let eventMsg = await channel.send(text);
+            let textOverview = await getOverviewFromIndex(i);
+            await channel.send(textOverview.msg);
             for (let emoji of emojies) {
-                if (msg instanceof Discord.Message) {
-                    await msg.react(emoji);
+                if (eventMsg instanceof Discord.Message) {
+                    await eventMsg.react(emoji);
                 }
             }
         }
+    }
+}
+async function updateWhoIsJoining(message) {
+    let channel = client.channels.get(raidSignupChannelId);
+    if (channel instanceof Discord.TextChannel) {
+        let overviewMessage = (await channel.fetchMessages({ after: message.id, limit: 1 })).first();
+        let overviewText = await getOverview(message);
+        overviewMessage.edit(overviewText.msg);
     }
 }
 function getNextDayOfWeek(date, dayOfWeek) {
@@ -139,48 +162,65 @@ node_schedule_1.scheduleJob({ hour: 18, dayOfWeek: 3, minute: 0 }, () => {
 node_schedule_1.scheduleJob({ hour: 18, dayOfWeek: 7, minute: 0 }, () => {
     postOverview(1);
 });
-async function postOverview(index) {
+async function postOverview(eventIndex) {
+    let overviewMsg = await getOverviewFromIndex(eventIndex);
+    if (overviewMsg !== undefined) {
+        // Find users who never responded'
+        let members = client.guilds.first().roles.get(membersRoleId).members;
+        overviewMsg.msg += `\n\nMembers who never responded: \n`;
+        let reactionUsers = members.filter(user => !overviewMsg.users.has(user.id));
+        overviewMsg.msg += reactionUsers
+            .sort((a, b) => a.nickname.localeCompare(b.nickname))
+            .map(user => `<@${user.id}>`).join(', ') + "\n\n";
+        let overviewChannel = client.channels.get(raidOverviewChannelId);
+        if (overviewChannel instanceof Discord.TextChannel) {
+            await overviewChannel.sendMessage(overviewMsg.msg);
+        }
+    }
+}
+async function getOverviewFromIndex(eventIndex) {
     let channel = client.channels.get(raidSignupChannelId);
     if (channel instanceof Discord.TextChannel) {
         let messages = channel.messages.array();
+        let actualIndex = await getMessageIndex(eventIndex);
+        let message = messages[actualIndex];
+        return getOverview(message);
+    }
+}
+async function getOverview(message) {
+    let overviewMsg = "**Who is joining:** \n\n";
+    let users = new Discord.Collection();
+    for (let emoji of emojies) {
+        let reactions = await message.reactions.get(emoji);
+        if (reactions == null || reactions.count === 1) {
+            continue; //Skip bot
+        }
+        overviewMsg += `<:${emoji}>${emoji.split(':')[0]}: \n`;
+        let reactionUsers = reactions.users.filter(user => user.id !== client.user.id);
+        reactionUsers.forEach(u => users.set(u.id, u));
+        overviewMsg += reactionUsers
+            .sort((a, b) => a.username.localeCompare(b.username))
+            .map(user => `<@${user.id}>`).join('\n') + "\n\n";
+    }
+    return { msg: overviewMsg, users: users };
+}
+async function getMessageIndex(eventIndex) {
+    let channel = client.channels.get(raidSignupChannelId);
+    let actualIndex = 0;
+    if (channel instanceof Discord.TextChannel) {
+        let messages = channel.messages.array();
+        // Skip raid message along with who is joining message
+        let messagesToSkip = eventIndex * 2;
         for (let i = 0; i < messages.length; i++) {
             if (messages[i].author.id !== client.user.id) {
                 continue;
             }
-            if (index == 0) {
-                index = i;
+            if (messagesToSkip === 0) {
+                actualIndex = i;
             }
-        }
-        if (messages.length < index + 1) {
-            return;
-        }
-        let overviewMsg = "**Overview:** \n\n";
-        let message = messages[index];
-        for (let emoji of emojies) {
-            let reactions = await message.reactions.get(emoji);
-            if (reactions.count === 1) {
-                continue; //Skip bot
-            }
-            overviewMsg += `<:${emoji}>${emoji.split(':')[0]}: \n`; //<${emoji}> :sad: <:sad:>  <&${emoji}> ${emoji}
-            overviewMsg += reactions.users.filter(user => user.id !== client.user.id).map(user => `<@${user.id}>`).join('\n') + "\n\n";
-        }
-        let overviewChannel = client.channels.get(raidOverviewChannelId);
-        if (overviewChannel instanceof Discord.TextChannel) {
-            await overviewChannel.sendMessage(overviewMsg);
+            messagesToSkip--;
         }
     }
+    return actualIndex;
 }
-/*
-function generate(timestamp: Date | String | Number = Date.now()) {
-    if (timestamp instanceof Date) timestamp = timestamp.getTime();
-    if (typeof timestamp !== 'number' || isNaN(timestamp)) {
-      throw new TypeError(
-        `"timestamp" argument must be a number (received ${isNaN(timestamp) ? 'NaN' : typeof timestamp})`
-      );
-    }
-    if (INCREMENT >= 4095) INCREMENT = 0;
-    // eslint-disable-next-line max-len
-    const BINARY = `${(timestamp - EPOCH).toString(2).padStart(42, '0')}0000100000${(INCREMENT++).toString(2).padStart(12, '0')}`;
-    return Util.binaryToID(BINARY);
-}*/ 
 //# sourceMappingURL=bot-discord.js.map
