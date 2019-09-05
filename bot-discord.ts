@@ -200,8 +200,9 @@ async function getOverview(message: Discord.Message): Promise<{msg: string, user
         if(reactions == null || reactions.count === 1){
             continue; //Skip bot
         }
+        let users = await reactions.fetchUsers()
         overviewMsg += `<:${emoji}>${emoji.split(':')[0]}: \n`;
-        let reactionUsers = reactions.users.filter(user => user.id !== client.user.id);
+        let reactionUsers = users.filter(user => user.id !== client.user.id);
         reactionUsers.forEach(u => users.set(u.id, u));
         overviewMsg += reactionUsers
             .sort((a, b) => a.username.localeCompare(b.username))
