@@ -136,6 +136,8 @@ async function postEventMsg() {
                 }
             }
         }
+    } else {
+        console.log('Could not post event msg, channel is not a TextChannel');
     }
 }
 
@@ -145,6 +147,8 @@ async function updateWhoIsJoining(message: Discord.Message){
         let overviewMessage = (await channel.fetchMessages({after: message.id, limit: 1})).first();
         let overviewText = await getOverview(message);
         overviewMessage.edit(overviewText.msg);
+    } else {
+        console.log('Could not update who is joining msg, channel is not a TextChannel');
     }
 }
 
@@ -182,6 +186,8 @@ async function postOverview(eventIndex: number) {
         if(overviewChannel instanceof Discord.TextChannel){
             await overviewChannel.sendMessage(overviewMsg.msg);
         }
+    } else {
+        console.log('Could not get overviewMsg from index');
     }
 }
 async function getOverviewFromIndex(eventIndex: number): Promise<{msg: string, users: Discord.Collection<string, Discord.User>} | undefined> {
