@@ -167,6 +167,7 @@ scheduleJob({hour: 18, dayOfWeek: 7, minute: 0}, () => {
 
 
 async function postOverview(eventIndex: number) {
+    console.log('Posting overview with index: ' + eventIndex);
     let overviewMsg = await getOverviewFromIndex(eventIndex);
     if(overviewMsg !== undefined){
         // Find users who never responded'
@@ -186,10 +187,10 @@ async function postOverview(eventIndex: number) {
 async function getOverviewFromIndex(eventIndex: number): Promise<{msg: string, users: Discord.Collection<string, Discord.User>} | undefined> {
     let channel = client.channels.get(raidSignupChannelId);
     if(channel instanceof Discord.TextChannel){
-        let messages = channel.messages.array();
-        let actualIndex = await getMessageIndex(eventIndex);
+        let messages = (await channel.fetchMessages()).array();
+        let actualIndex = await getMessageIndex(eventIndex, messages);
         let message = messages[actualIndex];
-        return getOverview(message);
+        return await getOverview(message);
     }
 }
 async function getOverview(message: Discord.Message): Promise<{msg: string, users: Discord.Collection<string, Discord.User>} | undefined> {
@@ -211,22 +212,18 @@ async function getOverview(message: Discord.Message): Promise<{msg: string, user
     return {msg: overviewMsg, users: users};
 }
 
-async function getMessageIndex(eventIndex: number){
-    let channel = client.channels.get(raidSignupChannelId);
+async function getMessageIndex(eventIndex: number, messages: Array<Discord.Message>){
     let actualIndex = 0;
-    if(channel instanceof Discord.TextChannel){
-        let messages = channel.messages.array();
-        // Skip raid message along with who is joining message
-        let messagesToSkip = eventIndex * 2; 
-        for(let i = 0; i < messages.length; i++){
-            if(messages[i].author.id !== client.user.id){
-                continue;
-            }
-            if(messagesToSkip === 0){
-                actualIndex = i;
-            }
-            messagesToSkip--;
+    // Skip raid message along with who is joining message
+    let messagesToSkip = eventIndex * 2; 
+    for(let i = 0; i < messages.length; i++){
+        if(messages[i].author.id !== client.user.id){
+            continue;
         }
+        if(messagesToSkip === 0){
+            actualIndex = i;
+        }
+        messagesToSkip--;
     }
     return actualIndex;
 }
