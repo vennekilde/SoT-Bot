@@ -163,10 +163,10 @@ scheduleJob({hour: 18, dayOfWeek: 4, minute: 0}, () => {
     postEventMsg();
 })
 scheduleJob({hour: 18, dayOfWeek: 3, minute: 0}, () => {
-    postOverview(0);
+    postOverview(1);
 })
 scheduleJob({hour: 18, dayOfWeek: 7, minute: 0}, () => {
-    postOverview(1);
+    postOverview(0);
 })
 
 
@@ -184,7 +184,7 @@ async function postOverview(eventIndex: number) {
 
         let overviewChannel = client.channels.get(raidOverviewChannelId);
         if(overviewChannel instanceof Discord.TextChannel){
-            await overviewChannel.sendMessage(overviewMsg.msg);
+            await overviewChannel.send(overviewMsg.msg);
         }
     } else {
         console.log('Could not get overviewMsg from index');
@@ -195,7 +195,9 @@ async function getOverviewFromIndex(eventIndex: number): Promise<{msg: string, u
     if(channel instanceof Discord.TextChannel){
         let messages = (await channel.fetchMessages()).array();
         let actualIndex = await getMessageIndex(eventIndex, messages);
+        console.log('Actual msg index: '+actualIndex);
         let message = messages[actualIndex];
+        console.log('Actual msg: '+JSON.stringify(message));
         return await getOverview(message);
     }
 }

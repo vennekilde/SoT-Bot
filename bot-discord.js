@@ -163,10 +163,10 @@ node_schedule_1.scheduleJob({ hour: 18, dayOfWeek: 4, minute: 0 }, () => {
     postEventMsg();
 });
 node_schedule_1.scheduleJob({ hour: 18, dayOfWeek: 3, minute: 0 }, () => {
-    postOverview(0);
+    postOverview(1);
 });
 node_schedule_1.scheduleJob({ hour: 18, dayOfWeek: 7, minute: 0 }, () => {
-    postOverview(1);
+    postOverview(0);
 });
 async function postOverview(eventIndex) {
     console.log('Posting overview with index: ' + eventIndex);
@@ -181,7 +181,7 @@ async function postOverview(eventIndex) {
             .map(user => `<@${user.id}>`).join(', ') + "\n\n";
         let overviewChannel = client.channels.get(raidOverviewChannelId);
         if (overviewChannel instanceof Discord.TextChannel) {
-            await overviewChannel.sendMessage(overviewMsg.msg);
+            await overviewChannel.send(overviewMsg.msg);
         }
     }
     else {
@@ -193,7 +193,9 @@ async function getOverviewFromIndex(eventIndex) {
     if (channel instanceof Discord.TextChannel) {
         let messages = (await channel.fetchMessages()).array();
         let actualIndex = await getMessageIndex(eventIndex, messages);
+        console.log('Actual msg index: ' + actualIndex);
         let message = messages[actualIndex];
+        console.log('Actual msg: ' + JSON.stringify(message));
         return await getOverview(message);
     }
 }
