@@ -90,6 +90,11 @@ client.on('messageReactionAdd', async (event, user) => {
                 if (reaction.emoji.identifier === event.emoji.identifier) {
                     continue;
                 }
+                let users = await reaction.fetchUsers();
+                // Skip if user didn't react with this reaction
+                if (!users.has(user.id)) {
+                    continue;
+                }
                 console.log('Removing reaction ' + reaction.emoji.identifier + ' from msg ' + event.message.id + ' by user ' + user.username);
                 await reaction.remove(user);
             }
