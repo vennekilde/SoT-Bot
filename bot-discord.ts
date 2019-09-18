@@ -75,13 +75,14 @@ client.on("ready", async () => { // When the bot is ready
 client.on('messageReactionAdd', async (event: Discord.MessageReaction, user: Discord.User) => {
     try {
         if(event.message.channel.id === raidSignupChannelId && user.id !== client.user.id){
+            console.log('User ' + user.username + ' added reaction '+ event.emoji.identifier + ' to msg ' + event.message.id)
             // Do not remove reactions, if the reaction was being late
             if(event.emoji.identifier === lateEmoji){
                 return;
             }
             for(let reaction of event.message.reactions.array()){
                 // Skip own bot reactions
-                if(reaction.count === 1) {
+                if(reaction.count <= 1) {
                     continue;
                 }
                 // Skip late reactions
@@ -93,6 +94,7 @@ client.on('messageReactionAdd', async (event: Discord.MessageReaction, user: Dis
                     continue;
                 }
                 
+                console.log('Removing reaction '+ reaction.emoji.identifier + ' from msg ' + event.message.id + ' by user '+ user.username)
                 await reaction.remove(user);
             }
             updateWhoIsJoining(event.message);
@@ -182,6 +184,7 @@ async function updateWhoIsJoining(message: Discord.Message){
         let overviewMessage = (await channel.fetchMessages({after: message.id, limit: 1})).first();
         let overviewText = await getOverview(message);
         overviewMessage.edit(overviewText.msg);
+        console.log('Updated who is joining message');
     } else {
         console.log('Could not update who is joining msg, channel is not a TextChannel');
     }
