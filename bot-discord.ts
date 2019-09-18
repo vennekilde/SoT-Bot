@@ -3,6 +3,69 @@ import * as moment from "moment";
 import * as momentTimezone from "moment-timezone";
 import { scheduleJob } from "node-schedule";
 
+// Discord channels
+const raidSignupChannelId = '614621107642695682';
+const raidOverviewChannelId = '614639046198689845';
+// Discord roles
+const membersRoleId = '602939206498779137';
+
+// Discord emojies
+const lateEmoji = '🇱';
+const emojies = [
+    "Daredevil:614635453475323904",
+    "Firebrand:614632660756594698",
+    "Herald:614635418822115330",
+    "Mirage:614632725436956682",
+    "Scourge:614632522751410186",
+    "Scrapper:614632521593782272",
+    "Spellbreaker:614635528700297238",
+    "Tempest:614632623133818890",
+    "NotHere:614635815255015437"
+]
+
+// Events to post
+const events = [
+    {
+        message: '<@&602939206498779137>\n' +
+                 '╓──────────────────────────────────╖\n' +
+                 '║ Closed raid Sunday\n' +
+                 '║ Raid starts at $date\n' +
+                 '║ If Late: click L\n'+
+                 '║ Sign up with class *Even if you click L*\n'+
+                 '╙──────────────────────────────────╜',
+        date: {
+            dayOfWeek: 6, //Sunday
+            hour: 20
+        },
+    },
+    {
+        message: '<@&602939206498779137>\n' +
+                 '╓──────────────────────────────────╖\n' +
+                 '║ Closed raid Wednesday\n' +
+                 '║ Raid starts at $date\n' +
+                 '║ If Late: click L\n'+
+                 '║ Sign up with class *Even if you click L*\n'+
+                 '╙──────────────────────────────────╜',
+        date: {
+            dayOfWeek: 2, //Wednesday
+            hour: 20
+        },
+    },
+    {
+        message: '<@&602939206498779137>\n' +
+                 '╓──────────────────────────────────╖\n' +
+                 '║ Closed raid Thursday\n' +
+                 '║ Raid starts at $date\n' +
+                 '║ If Late: click L\n'+
+                 '║ Sign up with class *Even if you click L*\n'+
+                 '╙──────────────────────────────────╜',
+        date: {
+            dayOfWeek: 3, //Thurdays
+            hour: 20
+        },
+    },
+];
+
 let client = new Discord.Client();
 client.login(process.env.BOT_TOKEN);
 
@@ -12,10 +75,20 @@ client.on("ready", async () => { // When the bot is ready
 client.on('messageReactionAdd', async (event: Discord.MessageReaction, user: Discord.User) => {
     try {
         if(event.message.channel.id === raidSignupChannelId && user.id !== client.user.id){
+            // Do not remove reactions, if the reaction was being late
+            if(event.emoji.identifier === lateEmoji){
+                return;
+            }
             for(let reaction of event.message.reactions.array()){
+                // Skip own bot reactions
                 if(reaction.count === 1) {
                     continue;
                 }
+                // Skip late reactions
+                if(reaction.emoji.identifier === lateEmoji) {
+                    continue;
+                }
+                // Skip reaction if they are the same as the one added
                 if(reaction.emoji.identifier === event.emoji.identifier) {
                     continue;
                 }
@@ -64,45 +137,6 @@ client.on('raw', packet => {
     });
 });
 
-const raidSignupChannelId = '614621107642695682';
-const raidOverviewChannelId = '614639046198689845';
-const membersRoleId = '602939206498779137';
-const events = [
-    {
-        message: '<@&602939206498779137>\n' +
-                 '╓──────────────────────────────────╖\n' +
-                 '║ Closed raid Sunday\n'+
-                 '║ Raid starts at $date\n'+
-                 '╙──────────────────────────────────╜',
-        date: {
-            dayOfWeek: 6, //Sunday
-            hour: 20
-        },
-    },
-    {
-        message: '<@&602939206498779137>\n' +
-                 '╓──────────────────────────────────╖\n' +
-                 '║ Closed raid Wednesday\n'+
-                 '║ Raid starts at $date\n'+
-                 '╙──────────────────────────────────╜',
-        date: {
-            dayOfWeek: 2, //Wednesday
-            hour: 20
-        },
-    }
-];
-const emojies = [
-    "Daredevil:614635453475323904",
-    "Firebrand:614632660756594698",
-    "Herald:614635418822115330",
-    "Mirage:614632725436956682",
-    "Scourge:614632522751410186",
-    "Scrapper:614632521593782272",
-    "Spellbreaker:614635528700297238",
-    "Tempest:614632623133818890",
-    "NotHere:614635815255015437"
-]
-
 async function postEventMsg() {
     console.log('Posting new raid message')
     let channel = client.channels.get(raidSignupChannelId)
@@ -130,10 +164,11 @@ async function postEventMsg() {
             let eventMsg = await channel.send(text);
             let textOverview = await getOverviewFromIndex(i);
             await channel.send(textOverview.msg);
-            for (let emoji of emojies){
-                if(eventMsg instanceof Discord.Message){
+            if(eventMsg instanceof Discord.Message){
+                for (let emoji of emojies){
                     await eventMsg.react(emoji);
                 }
+                await eventMsg.react(lateEmoji);
             }
         }
     } else {
@@ -159,13 +194,16 @@ function getNextDayOfWeek(date: moment.Moment, dayOfWeek: number): moment.Moment
     return resultDate;
 }
 
-scheduleJob({hour: 18, dayOfWeek: 4, minute: 0}, () => {
+scheduleJob({hour: 20, dayOfWeek: 4, minute: 0}, () => {
     postEventMsg();
 })
 scheduleJob({hour: 18, dayOfWeek: 3, minute: 0}, () => {
     postOverview(1);
 })
-scheduleJob({hour: 18, dayOfWeek: 7, minute: 0}, () => {
+scheduleJob({hour: 18, dayOfWeek: 4, minute: 0}, () => {
+    postOverview(2);
+})
+scheduleJob({hour: 18, dayOfWeek: 0, minute: 0}, () => {
     postOverview(0);
 })
 
@@ -205,19 +243,26 @@ async function getOverview(message: Discord.Message): Promise<{msg: string, user
     let overviewMsg = "**Who is joining:** \n\n";
     let users: Discord.Collection<string, Discord.User> = new Discord.Collection();
     for(let emoji of emojies) {
-        let reactions = await message.reactions.get(emoji);
-        if(reactions == null || reactions.count === 1){
-            continue; //Skip bot
-        }
-        let users = await reactions.fetchUsers()
-        overviewMsg += `<:${emoji}>${emoji.split(':')[0]}: \n`;
-        let reactionUsers = users.filter(user => user.id !== client.user.id);
-        reactionUsers.forEach(u => users.set(u.id, u));
-        overviewMsg += reactionUsers
-            .sort((a, b) => a.username.localeCompare(b.username))
-            .map(user => `<@${user.id}>`).join('\n') + "\n\n";
+        overviewMsg += await getReactionOverview(message, emoji)
     }
+    overviewMsg += await getReactionOverview(message, lateEmoji, 'Late')
     return {msg: overviewMsg, users: users};
+}
+
+async function getReactionOverview(message: Discord.Message, emoji: string, name?: string){
+    let result: string;
+    let reactions = await message.reactions.get(emoji);
+    if(reactions == null || reactions.count === 1){
+        return; //Skip bot
+    }
+    let users = await reactions.fetchUsers()
+    result = `<:${emoji}>${name ? name : emoji.split(':')[0]}: \n`;
+    let reactionUsers = users.filter(user => user.id !== client.user.id);
+    reactionUsers.forEach(u => users.set(u.id, u));
+    result += reactionUsers
+        .sort((a, b) => a.username.localeCompare(b.username))
+        .map(user => `<@${user.id}>`).join('\n') + "\n\n";
+    return result;
 }
 
 async function getMessageIndex(eventIndex: number, messages: Array<Discord.Message>){
