@@ -70,6 +70,19 @@ let client = new Discord.Client();
 client.login(process.env.BOT_TOKEN);
 
 client.on("ready", async () => { // When the bot is ready
+    // Preload reactions
+    console.log('Preloading reactions');
+    let channel = client.channels.get(raidSignupChannelId)
+    if(channel instanceof Discord.TextChannel){
+        await channel.fetchMessages();
+        for(let message of channel.messages.array()) {
+            if(message.author.id == client.user.id){
+                for(let reaction of message.reactions.array()){
+                    reaction.fetchUsers();
+                }
+            }
+        }
+    }
     console.log("Ready!"); // Log "Ready!"
 });
 client.on('messageReactionAdd', async (event: Discord.MessageReaction, user: Discord.User) => {
@@ -93,13 +106,13 @@ client.on('messageReactionAdd', async (event: Discord.MessageReaction, user: Dis
                 if(reaction.emoji.identifier === event.emoji.identifier) {
                     continue;
                 }
-                let users = await reaction.fetchUsers();
+
                 // Skip if user didn't react with this reaction
-                if(!users.has(user.id)){
+                if(!reaction.users.has(user.id)){
                     continue;
                 }
                 console.log('Removing reaction '+ reaction.emoji.identifier + ' from msg ' + event.message.id + ' by user '+ user.username)
-                await reaction.remove(user);
+                reaction.remove(user);
             }
             updateWhoIsJoining(event.message);
         }
@@ -182,16 +195,20 @@ async function postEventMsg() {
     }
 }
 
+//let timer: NodeJS.Timeout;
 async function updateWhoIsJoining(message: Discord.Message){
-    let channel = client.channels.get(raidSignupChannelId);
-    if(channel instanceof Discord.TextChannel){
-        let overviewMessage = (await channel.fetchMessages({after: message.id, limit: 1})).first();
-        let overviewText = await getOverview(message);
-        overviewMessage.edit(overviewText.msg);
-        console.log('Updated who is joining message');
-    } else {
-        console.log('Could not update who is joining msg, channel is not a TextChannel');
-    }
+    //clearTimeout(timer);
+    //timer = setTimeout(async () => {
+        let channel = client.channels.get(raidSignupChannelId);
+        if(channel instanceof Discord.TextChannel){
+            let overviewMessage = (await channel.fetchMessages({after: message.id, limit: 1})).first();
+            let overviewText = await getOverview(message);
+            overviewMessage.edit(overviewText.msg);
+            console.log('Updated who is joining message');
+        } else {
+            console.log('Could not update who is joining msg, channel is not a TextChannel');
+        }
+    //}, 1000);
 }
 
 function getNextDayOfWeek(date: moment.Moment, dayOfWeek: number): moment.Moment {
@@ -235,7 +252,7 @@ async function postOverview(eventIndex: number) {
         console.log('Could not get overviewMsg from index');
     }
 }
-async function getOverviewFromIndex(eventIndex: number): Promise<{msg: string, users: Discord.Collection<string, Discord.User>} | undefined> {
+async function getOverviewFromIndex(eventIndex: number): Promise<{msg: string, users: Discord.Collection<string, Discord.User>}> {
     let channel = client.channels.get(raidSignupChannelId);
     if(channel instanceof Discord.TextChannel){
         let messages = (await channel.fetchMessages()).array();
@@ -246,7 +263,7 @@ async function getOverviewFromIndex(eventIndex: number): Promise<{msg: string, u
         return await getOverview(message);
     }
 }
-async function getOverview(message: Discord.Message): Promise<{msg: string, users: Discord.Collection<string, Discord.User>} | undefined> {
+async function getOverview(message: Discord.Message): Promise<{msg: string, users: Discord.Collection<string, Discord.User>}> {
     let overviewMsg = "**Who is joining:** \n\n";
     let users: Discord.Collection<string, Discord.User> = new Discord.Collection();
     for(let emoji of emojies) {
@@ -256,16 +273,15 @@ async function getOverview(message: Discord.Message): Promise<{msg: string, user
     return {msg: overviewMsg, users: users};
 }
 
-async function getReactionOverview(message: Discord.Message, emoji: string, name?: string){
+async function getReactionOverview(message: Discord.Message, emoji: string, name?: string): Promise<string>{
     let result: string;
     let reactions = await message.reactions.get(emoji);
     if(reactions == null || reactions.count === 1){
-        return; //Skip bot
+        return ''; //Skip bot
     }
-    let users = await reactions.fetchUsers()
-    result = `<:${emoji}>${name ? name : emoji.split(':')[0]}: \n`;
-    let reactionUsers = users.filter(user => user.id !== client.user.id);
-    reactionUsers.forEach(u => users.set(u.id, u));
+    result = (name ? emoji : `<:${emoji}>`) + ' ' + (name ? name : emoji.split(':')[0]) + ': \n';
+    let reactionUsers = reactions.users.filter(user => user.id !== client.user.id);
+    reactionUsers.forEach(u => reactions.users.set(u.id, u));
     result += reactionUsers
         .sort((a, b) => a.username.localeCompare(b.username))
         .map(user => `<@${user.id}>`).join('\n') + "\n\n";

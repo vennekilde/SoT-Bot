@@ -67,6 +67,19 @@ const events = [
 let client = new Discord.Client();
 client.login(process.env.BOT_TOKEN);
 client.on("ready", async () => {
+    // Preload reactions
+    console.log('Preloading reactions');
+    let channel = client.channels.get(raidSignupChannelId);
+    if (channel instanceof Discord.TextChannel) {
+        await channel.fetchMessages();
+        for (let message of channel.messages.array()) {
+            if (message.author.id == client.user.id) {
+                for (let reaction of message.reactions.array()) {
+                    reaction.fetchUsers();
+                }
+            }
+        }
+    }
     console.log("Ready!"); // Log "Ready!"
 });
 client.on('messageReactionAdd', async (event, user) => {
@@ -90,13 +103,12 @@ client.on('messageReactionAdd', async (event, user) => {
                 if (reaction.emoji.identifier === event.emoji.identifier) {
                     continue;
                 }
-                let users = await reaction.fetchUsers();
                 // Skip if user didn't react with this reaction
-                if (!users.has(user.id)) {
+                if (!reaction.users.has(user.id)) {
                     continue;
                 }
                 console.log('Removing reaction ' + reaction.emoji.identifier + ' from msg ' + event.message.id + ' by user ' + user.username);
-                await reaction.remove(user);
+                reaction.remove(user);
             }
             updateWhoIsJoining(event.message);
         }
@@ -182,7 +194,10 @@ async function postEventMsg() {
         console.log('Could not post event msg, channel is not a TextChannel');
     }
 }
+//let timer: NodeJS.Timeout;
 async function updateWhoIsJoining(message) {
+    //clearTimeout(timer);
+    //timer = setTimeout(async () => {
     let channel = client.channels.get(raidSignupChannelId);
     if (channel instanceof Discord.TextChannel) {
         let overviewMessage = (await channel.fetchMessages({ after: message.id, limit: 1 })).first();
@@ -193,6 +208,7 @@ async function updateWhoIsJoining(message) {
     else {
         console.log('Could not update who is joining msg, channel is not a TextChannel');
     }
+    //}, 1000);
 }
 function getNextDayOfWeek(date, dayOfWeek) {
     // Code to check that date and dayOfWeek are valid left as an exercise ;)
@@ -256,12 +272,11 @@ async function getReactionOverview(message, emoji, name) {
     let result;
     let reactions = await message.reactions.get(emoji);
     if (reactions == null || reactions.count === 1) {
-        return; //Skip bot
+        return ''; //Skip bot
     }
-    let users = await reactions.fetchUsers();
-    result = `<:${emoji}>${name ? name : emoji.split(':')[0]}: \n`;
-    let reactionUsers = users.filter(user => user.id !== client.user.id);
-    reactionUsers.forEach(u => users.set(u.id, u));
+    result = (name ? emoji : `<:${emoji}>`) + ' ' + (name ? name : emoji.split(':')[0]) + ': \n';
+    let reactionUsers = reactions.users.filter(user => user.id !== client.user.id);
+    reactionUsers.forEach(u => reactions.users.set(u.id, u));
     result += reactionUsers
         .sort((a, b) => a.username.localeCompare(b.username))
         .map(user => `<@${user.id}>`).join('\n') + "\n\n";
