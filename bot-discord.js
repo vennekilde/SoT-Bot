@@ -210,7 +210,12 @@ async function updateWhoIsJoining(message) {
 function getNextDayOfWeek(date, dayOfWeek) {
     // Code to check that date and dayOfWeek are valid left as an exercise ;)
     var resultDate = moment(date);
-    resultDate.day(date.day() + (7 + dayOfWeek - date.day()) % 7);
+    if (date.day() === dayOfWeek) {
+        resultDate.date(date.date() + 7);
+    }
+    else {
+        resultDate.day(resultDate.day() + (7 + dayOfWeek - resultDate.day()) % 7);
+    }
     return resultDate;
 }
 node_schedule_1.scheduleJob({ hour: 20, dayOfWeek: 4, minute: 0 }, () => {

@@ -211,7 +211,11 @@ async function updateWhoIsJoining(message: Discord.Message){
 function getNextDayOfWeek(date: moment.Moment, dayOfWeek: number): moment.Moment {
     // Code to check that date and dayOfWeek are valid left as an exercise ;)
     var resultDate = moment(date);
-    resultDate.day(date.day() + (7 + dayOfWeek - date.day()) % 7);
+    if(date.day() === dayOfWeek){
+        resultDate.date(date.date() + 7);
+    } else {
+        resultDate.day(resultDate.day() + (7 + dayOfWeek - resultDate.day()) % 7);
+    }
     return resultDate;
 }
 
