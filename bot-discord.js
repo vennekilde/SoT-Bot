@@ -61,6 +61,18 @@ const events = [
         },
     },
 ];
+node_schedule_1.scheduleJob({ hour: 20, dayOfWeek: 4, minute: 0 }, () => {
+    postEventMsg();
+});
+node_schedule_1.scheduleJob({ hour: 18, dayOfWeek: 3, minute: 0 }, () => {
+    postOverview(1);
+});
+node_schedule_1.scheduleJob({ hour: 18, dayOfWeek: 4, minute: 0 }, () => {
+    postOverview(2);
+});
+node_schedule_1.scheduleJob({ hour: 18, dayOfWeek: 0, minute: 0 }, () => {
+    postOverview(0);
+});
 let client = new Discord.Client();
 client.login(process.env.BOT_TOKEN);
 client.on("ready", async () => {
@@ -191,6 +203,32 @@ async function postEventMsg() {
         console.log('Could not post event msg, channel is not a TextChannel');
     }
 }
+async function editEventMessages() {
+    console.log('Editing raid messages');
+    let channel = client.channels.get(raidSignupChannelId);
+    if (channel instanceof Discord.TextChannel) {
+        //Create new messages
+        let messages = (await channel.fetchMessages()).sort((a, b) => a.createdTimestamp - b.createdTimestamp).array();
+        for (let i = 0; i < events.length; i++) {
+            let actualIndex = await getMessageIndex(i, messages);
+            let message = messages[actualIndex];
+            let event = events[i];
+            let text = '';
+            if (i !== 0) {
+                text += '\n━━━━━━━━━━━━━━\n\n';
+            }
+            let date = getNextDayOfWeek(momentTimezone.tz("Europe/Copenhagen"), event.date.dayOfWeek + 1);
+            date.hours(event.date.hour).minutes(0).seconds(0);
+            let dateStr = moment(date).format('MMMM Do YYYY, HH:mm:ss G\\\MTZ');
+            text += event.message.replace('$date', dateStr);
+            text += "\n";
+            await message.edit(text);
+        }
+    }
+    else {
+        console.log('Could not post event msg, channel is not a TextChannel');
+    }
+}
 //let timer: NodeJS.Timeout;
 async function updateWhoIsJoining(message) {
     //clearTimeout(timer);
@@ -218,18 +256,6 @@ function getNextDayOfWeek(date, dayOfWeek) {
     }
     return resultDate;
 }
-node_schedule_1.scheduleJob({ hour: 20, dayOfWeek: 4, minute: 0 }, () => {
-    postEventMsg();
-});
-node_schedule_1.scheduleJob({ hour: 18, dayOfWeek: 3, minute: 0 }, () => {
-    postOverview(1);
-});
-node_schedule_1.scheduleJob({ hour: 18, dayOfWeek: 4, minute: 0 }, () => {
-    postOverview(2);
-});
-node_schedule_1.scheduleJob({ hour: 18, dayOfWeek: 0, minute: 0 }, () => {
-    postOverview(0);
-});
 async function postOverview(eventIndex) {
     console.log('Posting overview with index: ' + eventIndex);
     let overviewMsg = await getOverviewFromIndex(eventIndex);
@@ -253,7 +279,7 @@ async function postOverview(eventIndex) {
 async function getOverviewFromIndex(eventIndex) {
     let channel = client.channels.get(raidSignupChannelId);
     if (channel instanceof Discord.TextChannel) {
-        let messages = (await channel.fetchMessages()).array();
+        let messages = (await channel.fetchMessages()).sort((a, b) => a.createdTimestamp - b.createdTimestamp).array();
         let actualIndex = await getMessageIndex(eventIndex, messages);
         console.log('Actual msg index: ' + actualIndex);
         let message = messages[actualIndex];
