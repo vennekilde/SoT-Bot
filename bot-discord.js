@@ -29,8 +29,7 @@ const events = [
             '╓──────────────────────────────────╖\n' +
             '║ Closed raid Sunday\n' +
             '║ Raid starts at $date\n' +
-            '║ If Late: click L\n' +
-            '║ Sign up with class *Even if you click L*\n' +
+            '║ If Late: click 🇱 - Sign up with class *Even if you click L*\n' +
             '╙──────────────────────────────────╜',
         date: {
             dayOfWeek: 6,
@@ -42,8 +41,7 @@ const events = [
             '╓──────────────────────────────────╖\n' +
             '║ Closed raid Wednesday\n' +
             '║ Raid starts at $date\n' +
-            '║ If Late: click L\n' +
-            '║ Sign up with class *Even if you click L*\n' +
+            '║ If Late: click 🇱 - Sign up with class *Even if you click L*\n' +
             '╙──────────────────────────────────╜',
         date: {
             dayOfWeek: 2,
@@ -55,8 +53,7 @@ const events = [
             '╓──────────────────────────────────╖\n' +
             '║ Closed raid Thursday\n' +
             '║ Raid starts at $date\n' +
-            '║ If Late: click L\n' +
-            '║ Sign up with class *Even if you click L*\n' +
+            '║ If Late: click 🇱 - Sign up with class *Even if you click L*\n' +
             '╙──────────────────────────────────╜',
         date: {
             dayOfWeek: 3,
