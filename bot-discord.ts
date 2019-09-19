@@ -256,7 +256,7 @@ async function getOverviewFromIndex(eventIndex: number): Promise<{msg: string, u
         let actualIndex = await getMessageIndex(eventIndex, messages);
         console.log('Actual msg index: '+actualIndex);
         let message = messages[actualIndex];
-        console.log('Actual msg: '+JSON.stringify(message));
+        console.log('Actual msg: '+JSON.stringify(message.content));
         return await getOverview(message);
     }
 }
