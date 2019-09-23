@@ -303,7 +303,7 @@ async function getReactionOverview(message, emoji, name) {
         return ''; //Skip bot
     }
     result = (name ? emoji : `<:${emoji}>`) + ' ' + (name ? name : emoji.split(':')[0]) + ': \n';
-    let reactionUsers = reactions.users.filter(user => user.id !== client.user.id);
+    let reactionUsers = (await reactions.fetchUsers()).filter(user => user.id !== client.user.id);
     reactionUsers.forEach(u => reactions.users.set(u.id, u));
     result += reactionUsers
         .sort((a, b) => a.username.localeCompare(b.username))
