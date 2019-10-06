@@ -308,7 +308,7 @@ async function getReactionOverview(message, emoji, name) {
     let result;
     let reactions = await message.reactions.get(emoji);
     if (reactions == null || reactions.count === 1) {
-        return { msg: '', users: null }; //Skip bot
+        return { msg: '', users: new Discord.Collection() }; //Skip bot
     }
     result = (name ? emoji : `<:${emoji}>`) + ' ' + (name ? name : emoji.split(':')[0]) + ': \n';
     let reactionUsers = (await reactions.fetchUsers()).filter(user => user.id !== client.user.id);
