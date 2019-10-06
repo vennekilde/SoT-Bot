@@ -30,7 +30,7 @@ const events = [
                  '╓──────────────────────────────────╖\n' +
                  '║ Closed raid Sunday\n' +
                  '║ Raid starts at $date\n' +
-                 '║ If Late: click 🇱 - Sign up with class *Even if you click L*\n'+
+                 '║ If Late: click 🇱 - Sign up with class *Even if you click 🇱*\n'+
                  '╙──────────────────────────────────╜',
         date: {
             dayOfWeek: 6, //Sunday
@@ -42,7 +42,7 @@ const events = [
                  '╓──────────────────────────────────╖\n' +
                  '║ Closed raid Wednesday\n' +
                  '║ Raid starts at $date\n' +
-                 '║ If Late: click 🇱 - Sign up with class *Even if you click L*\n'+
+                 '║ If Late: click 🇱 - Sign up with class *Even if you click 🇱*\n'+
                  '╙──────────────────────────────────╜',
         date: {
             dayOfWeek: 2, //Wednesday
@@ -54,7 +54,7 @@ const events = [
                  '╓──────────────────────────────────╖\n' +
                  '║ Closed raid Thursday\n' +
                  '║ Raid starts at $date\n' +
-                 '║ If Late: click 🇱 - Sign up with class *Even if you click L*\n'+
+                 '║ If Late: click 🇱 - Sign up with class *Even if you click 🇱*\n'+
                  '╙──────────────────────────────────╜',
         date: {
             dayOfWeek: 3, //Thurdays
@@ -100,7 +100,7 @@ client.on('messageReactionAdd', async (event: Discord.MessageReaction, user: Dis
         if(event.message.channel.id === raidSignupChannelId && user.id !== client.user.id){
             console.log('User ' + user.username + ' added reaction '+ event.emoji.identifier + ' to msg ' + event.message.id)
             // Do not remove reactions, if the reaction was being late
-            if(event.emoji.identifier === lateEmoji){
+            if(event.emoji.name === lateEmoji){
                 return;
             }
             for(let reaction of event.message.reactions.array()){
@@ -109,7 +109,7 @@ client.on('messageReactionAdd', async (event: Discord.MessageReaction, user: Dis
                     continue;
                 }
                 // Skip late reactions
-                if(reaction.emoji.identifier === lateEmoji) {
+                if(reaction.emoji.name === lateEmoji) {
                     continue;
                 }
                 // Skip reaction if they are the same as the one added
@@ -269,7 +269,7 @@ async function postOverview(eventIndex: number) {
         let reactionUsers = members.filter(user => !overviewMsg.users.has(user.id));
         overviewMsg.msg += reactionUsers
             .sort((a, b) => a.nickname.localeCompare(b.nickname))
-            .map(user => `<@${user.id}>`).join(', ') + "\n\n";
+            .map(user => `<@${user.id}>`).join('\n') + "\n";
 
         let overviewChannel = client.channels.get(raidOverviewChannelId);
         if(overviewChannel instanceof Discord.TextChannel){
@@ -294,17 +294,25 @@ async function getOverview(message: Discord.Message): Promise<{msg: string, user
     let overviewMsg = "**Who is joining:** \n\n";
     let users: Discord.Collection<string, Discord.User> = new Discord.Collection();
     for(let emoji of emojies) {
-        overviewMsg += await getReactionOverview(message, emoji)
+        let overview = await getReactionOverview(message, emoji)
+        overviewMsg += overview.msg
+        for(let user of overview.users.array()){
+            users.set(user.id, user);
+        }
     }
-    overviewMsg += await getReactionOverview(message, lateEmoji, 'Late')
+    let overview = await getReactionOverview(message, lateEmoji, 'Late')
+    overviewMsg += overview.msg
+    for(let user of overview.users.array()){
+        users.set(user.id, user);
+    }
     return {msg: overviewMsg, users: users};
 }
 
-async function getReactionOverview(message: Discord.Message, emoji: string, name?: string): Promise<string>{
+async function getReactionOverview(message: Discord.Message, emoji: string, name?: string): Promise<{msg: string, users: Discord.Collection<string, Discord.User>}>{
     let result: string;
     let reactions = await message.reactions.get(emoji);
     if(reactions == null || reactions.count === 1){
-        return ''; //Skip bot
+        return {msg: '', users: null}; //Skip bot
     }
     result = (name ? emoji : `<:${emoji}>`) + ' ' + (name ? name : emoji.split(':')[0]) + ': \n';
     let reactionUsers = (await reactions.fetchUsers()).filter(user => user.id !== client.user.id);
@@ -312,7 +320,7 @@ async function getReactionOverview(message: Discord.Message, emoji: string, name
     result += reactionUsers
         .sort((a, b) => a.username.localeCompare(b.username))
         .map(user => `<@${user.id}>`).join('\n') + "\n\n";
-    return result;
+    return {msg: result, users: reactionUsers}; //Skip bot
 }
 
 async function getMessageIndex(eventIndex: number, messages: Array<Discord.Message>){
