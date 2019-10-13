@@ -96,28 +96,27 @@ client.on('messageReactionAdd', async (event, user) => {
         if (event.message.channel.id === raidSignupChannelId && user.id !== client.user.id) {
             console.log('User ' + user.username + ' added reaction ' + event.emoji.identifier + ' to msg ' + event.message.id);
             // Do not remove reactions, if the reaction was being late
-            if (event.emoji.name === lateEmoji) {
-                return;
-            }
-            for (let reaction of event.message.reactions.array()) {
-                // Skip own bot reactions
-                if (reaction.count <= 1) {
-                    continue;
+            if (event.emoji.name !== lateEmoji) {
+                for (let reaction of event.message.reactions.array()) {
+                    // Skip own bot reactions
+                    if (reaction.count <= 1) {
+                        continue;
+                    }
+                    // Skip late reactions
+                    if (reaction.emoji.name === lateEmoji) {
+                        continue;
+                    }
+                    // Skip reaction if they are the same as the one added
+                    if (reaction.emoji.identifier === event.emoji.identifier) {
+                        continue;
+                    }
+                    // Skip if user didn't react with this reaction
+                    if (!reaction.users.has(user.id)) {
+                        continue;
+                    }
+                    console.log('Removing reaction ' + reaction.emoji.identifier + ' from msg ' + event.message.id + ' by user ' + user.username);
+                    reaction.remove(user);
                 }
-                // Skip late reactions
-                if (reaction.emoji.name === lateEmoji) {
-                    continue;
-                }
-                // Skip reaction if they are the same as the one added
-                if (reaction.emoji.identifier === event.emoji.identifier) {
-                    continue;
-                }
-                // Skip if user didn't react with this reaction
-                if (!reaction.users.has(user.id)) {
-                    continue;
-                }
-                console.log('Removing reaction ' + reaction.emoji.identifier + ' from msg ' + event.message.id + ' by user ' + user.username);
-                reaction.remove(user);
             }
             updateWhoIsJoining(event.message);
         }
