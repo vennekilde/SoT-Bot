@@ -61,16 +61,16 @@ const events = [
         },
     },
 ];
-node_schedule_1.scheduleJob({ hour: 20, dayOfWeek: 4, minute: 0 }, () => {
+node_schedule_1.scheduleJob({ hour: 21, dayOfWeek: 4, minute: 0 }, () => {
     postEventMsg();
 });
-node_schedule_1.scheduleJob({ hour: 18, dayOfWeek: 3, minute: 0 }, () => {
+node_schedule_1.scheduleJob({ hour: 19, dayOfWeek: 3, minute: 0 }, () => {
     postOverview(1);
 });
-node_schedule_1.scheduleJob({ hour: 18, dayOfWeek: 4, minute: 0 }, () => {
+node_schedule_1.scheduleJob({ hour: 19, dayOfWeek: 4, minute: 0 }, () => {
     postOverview(2);
 });
-node_schedule_1.scheduleJob({ hour: 18, dayOfWeek: 0, minute: 0 }, () => {
+node_schedule_1.scheduleJob({ hour: 19, dayOfWeek: 0, minute: 0 }, () => {
     postOverview(0);
 });
 let client = new Discord.Client();

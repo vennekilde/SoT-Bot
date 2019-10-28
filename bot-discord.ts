@@ -63,16 +63,16 @@ const events = [
     },
 ];
 
-scheduleJob({hour: 20, dayOfWeek: 4, minute: 0}, () => {
+scheduleJob({hour: 21, dayOfWeek: 4, minute: 0}, () => {
     postEventMsg();
 })
-scheduleJob({hour: 18, dayOfWeek: 3, minute: 0}, () => {
+scheduleJob({hour: 19, dayOfWeek: 3, minute: 0}, () => {
     postOverview(1);
 })
-scheduleJob({hour: 18, dayOfWeek: 4, minute: 0}, () => {
+scheduleJob({hour: 19, dayOfWeek: 4, minute: 0}, () => {
     postOverview(2);
 })
-scheduleJob({hour: 18, dayOfWeek: 0, minute: 0}, () => {
+scheduleJob({hour: 19, dayOfWeek: 0, minute: 0}, () => {
     postOverview(0);
 })
 
