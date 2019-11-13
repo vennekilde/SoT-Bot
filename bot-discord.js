@@ -9,6 +9,9 @@ const raidSignupChannelId = '614621107642695682';
 const raidOverviewChannelId = '614639046198689845';
 // Discord roles
 const membersRoleId = '602939206498779137';
+const ignoreMembersWithRoles = [
+    '621446430606884865'
+];
 // Discord emojies
 const lateEmoji = '🇱';
 const emojies = [
@@ -260,7 +263,9 @@ async function postOverview(eventIndex) {
     let overviewMsg = await getOverviewFromIndex(eventIndex);
     if (overviewMsg !== undefined) {
         // Find users who never responded'
-        let members = client.guilds.first().roles.get(membersRoleId).members;
+        let members = client.guilds.first().roles.get(membersRoleId).members
+            //Ignore users with roles defined in ignoreMembersWithRoles
+            .filter(user => user.roles.filter(role => ignoreMembersWithRoles.includes(role.id)).size == 0);
         overviewMsg.msg += `\n\nMembers who never responded: \n`;
         let reactionUsers = members.filter(user => !overviewMsg.users.has(user.id));
         overviewMsg.msg += reactionUsers
