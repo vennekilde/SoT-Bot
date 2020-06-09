@@ -23,6 +23,7 @@ const emojies = [
     "Scrapper:614632521593782272",
     "Spellbreaker:614635528700297238",
     "Tempest:614632623133818890",
+    "Soulbeast:720002778688127149",
     "NotHere:614635815255015437"
 ]
 
