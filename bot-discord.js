@@ -237,6 +237,10 @@ async function updateWhoIsJoining(message) {
     //clearTimeout(timer);
     //timer = setTimeout(async () => {
     let channel = client.channels.get(raidSignupChannelId);
+    if (message.author.id != client.user.id) {
+        //Assume we cannot edit other peoples messages
+        return;
+    }
     if (channel instanceof Discord.TextChannel) {
         let overviewMessage = (await channel.fetchMessages({ after: message.id, limit: 1 })).first();
         let overviewText = await getOverview(message);
