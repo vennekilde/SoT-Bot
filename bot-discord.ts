@@ -273,12 +273,12 @@ async function postOverview(eventIndex: number) {
         // Find users who never responded'
         let members = client.guilds.first().roles.get(membersRoleId).members
             //Ignore users with roles defined in ignoreMembersWithRoles
-            .filter(user => user.roles.filter(role => ignoreMembersWithRoles.includes(role.id)).size == 0);
+            .filter(user =>  user.roles.filter(role => ignoreMembersWithRoles.includes(role.id)).size == 0);
         overviewMsg.msg += `\n\nMembers who never responded: \n`;
         let reactionUsers = members.filter(user => !overviewMsg.users.has(user.id));
         overviewMsg.msg += reactionUsers
             .sort((a, b) => a.nickname.localeCompare(b.nickname))
-            .map(user => `<@${user.id}>`).join('\n') + "\n";
+            .map(user => user.displayName).join('\n') + "\n";
 
         let overviewChannel = client.channels.get(raidOverviewChannelId);
         if(overviewChannel instanceof Discord.TextChannel){

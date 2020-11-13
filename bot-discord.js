@@ -275,7 +275,7 @@ async function postOverview(eventIndex) {
         let reactionUsers = members.filter(user => !overviewMsg.users.has(user.id));
         overviewMsg.msg += reactionUsers
             .sort((a, b) => a.nickname.localeCompare(b.nickname))
-            .map(user => `<@${user.id}>`).join('\n') + "\n";
+            .map(user => user.displayName).join('\n') + "\n";
         let overviewChannel = client.channels.get(raidOverviewChannelId);
         if (overviewChannel instanceof Discord.TextChannel) {
             await overviewChannel.send(overviewMsg.msg);
