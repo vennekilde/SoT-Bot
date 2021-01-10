@@ -15,15 +15,16 @@ const ignoreMembersWithRoles = [
 // Discord emojies
 const lateEmoji = '🇱';
 const emojies = [
-    "Daredevil:614635453475323904",
+    //"Daredevil:614635453475323904",
+    "Dragonhunter:797812158283907113",
     "Firebrand:614632660756594698",
     "Herald:614635418822115330",
     "Chrono:743612271191916594",
     "Scourge:614632522751410186",
     "Scrapper:614632521593782272",
+    "Soulbeast:720001300376453201",
     "Spellbreaker:614635528700297238",
     "Tempest:614632623133818890",
-    "Soulbeast:720001300376453201",
     "NotHere:614635815255015437"
 ]
 
