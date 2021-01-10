@@ -29,8 +29,8 @@ jobs:
         uses: docker/build-push-action@v2
         with:
           push: true
-          tags: 
-            - $GITHUB_REPOSITORY:latest
-            - $GITHUB_REPOSITORY:$GITHUB_RUN_ID 
+          tags: |
+            $GITHUB_REPOSITORY:latest
+            $GITHUB_REPOSITORY:$GITHUB_RUN_ID 
       - name: Image digest
         run: echo ${{ steps.docker_build.outputs.digest }}
