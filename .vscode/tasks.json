@@ -6,7 +6,7 @@
         {
             "label": "TS Watch & Build",
             "type": "npm",
-            "script": "build",
+            "script": "build-watch",
             "problemMatcher": [
                 "$tsc-watch"
             ],

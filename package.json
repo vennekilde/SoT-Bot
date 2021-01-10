@@ -5,7 +5,8 @@
   "main": "index.ts",
   "scripts": {
     "debug": "node --inspect-brk bot-discord.js",
-    "build": "tsc -w"
+    "build": "tsc",
+    "build-watch": "tsc -w"
   },
   "author": "",
   "license": "ISC",
