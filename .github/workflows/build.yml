@@ -29,6 +29,6 @@ jobs:
         uses: docker/build-push-action@v2
         with:
           push: true
-          tags: "${GITHUB_REPOSITORY}:latest"
+          tags: "vennekilde/sot-bot:latest"
       - name: Image digest
         run: echo ${{ steps.docker_build.outputs.digest }}
