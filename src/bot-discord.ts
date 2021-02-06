@@ -87,48 +87,51 @@ client.login(process.env.BOT_TOKEN);
 client.on("ready", async () => { // When the bot is ready
     // Preload reactions
     console.log('Preloading reactions');
-    let channel = client.channels.get(raidSignupChannelId)
+    let channel = await client.channels.fetch(raidSignupChannelId)
     if(channel instanceof Discord.TextChannel){
-        await channel.fetchMessages();
-        for(let message of channel.messages.array()) {
+        await channel.messages.fetch();
+        for(let message of channel.messages.cache.array()) {
             if(message.author.id == client.user.id){
-                for(let reaction of message.reactions.array()){
-                    reaction.fetchUsers();
+                for(let reaction of message.reactions.cache.array()){
+                    await (await reaction.fetch()).users.fetch();
                 }
             }
         }
     }
     console.log("Ready!"); // Log "Ready!"
 });
+
 client.on('messageReactionAdd', async (event: Discord.MessageReaction, user: Discord.User) => {
     try {
         if(event.message.channel.id === raidSignupChannelId && user.id !== client.user.id){
             console.log('User ' + user.username + ' added reaction '+ event.emoji.identifier + ' to msg ' + event.message.id)
             // Do not remove reactions, if the reaction was being late
-            if(event.emoji.name !== lateEmoji){
-                for(let reaction of event.message.reactions.array()){
+            let updateOverview = true
+            if (event.emoji.name !== lateEmoji) {
+                for (let reaction of event.message.reactions.cache.array()) {
                     // Skip own bot reactions
-                    if(reaction.count <= 1) {
+                    if (reaction.count <= 1) {
                         continue;
                     }
                     // Skip late reactions
-                    if(reaction.emoji.name === lateEmoji) {
+                    if (reaction.emoji.name === lateEmoji) {
                         continue;
                     }
                     // Skip reaction if they are the same as the one added
-                    if(reaction.emoji.identifier === event.emoji.identifier) {
+                    if (reaction.emoji.identifier === event.emoji.identifier) {
                         continue;
                     }
-
                     // Skip if user didn't react with this reaction
-                    if(!reaction.users.has(user.id)){
+                    if (!reaction.users.cache.has(user.id)) {
                         continue;
                     }
-                    console.log('Removing reaction '+ reaction.emoji.identifier + ' from msg ' + event.message.id + ' by user '+ user.username)
-                    reaction.remove(user);
+                    console.log('Removing reaction ' + reaction.emoji.identifier + ' from msg ' + event.message.id + ' by user ' + user.username);
+                    reaction.users.remove(user);
+                    // The remove event will trigger and update who is joining
+                    updateOverview = false
                 }
             }
-            updateWhoIsJoining(event.message);
+            if (updateOverview) updateWhoIsJoining(event.message);
         }
         return true;
     } catch(e){
@@ -145,38 +148,37 @@ client.on('messageReactionRemove', async (event: Discord.MessageReaction, user: 
         console.log(e);
     }
 })
-client.on('raw', packet => {
+/*client.on('raw', async packet => {
     // We don't want this to run on unrelated packets
     if (!['MESSAGE_REACTION_ADD', 'MESSAGE_REACTION_REMOVE'].includes(packet.t)) return;
     // Grab the channel to check the message from
-    const channel = client.channels.get(packet.d.channel_id);
+    const channel = await client.channels.fetch(packet.d.channel_id);
     // There's no need to emit if the message is cached, because the event will fire anyway for that
-    if (!(channel instanceof Discord.TextChannel) || channel.messages.has(packet.d.message_id)) return;
+    if (!(channel instanceof Discord.TextChannel)) return;
     // Since we have confirmed the message is not cached, let's fetch it
-    channel.fetchMessage(packet.d.message_id).then(message => {
-        // Emojis can have identifiers of name:id format, so we have to account for that case as well
-        const emoji = packet.d.emoji.id ? `${packet.d.emoji.name}:${packet.d.emoji.id}` : packet.d.emoji.name;
-        // This gives us the reaction we need to emit the event properly, in top of the message object
-        const reaction = message.reactions.get(emoji);
-        // Adds the currently reacting user to the reaction's users collection.
-        if (reaction) reaction.users.set(packet.d.user_id, client.users.get(packet.d.user_id));
-        // Check which type of event it is before emitting
-        if (packet.t === 'MESSAGE_REACTION_ADD') {
-            client.emit('messageReactionAdd', reaction, client.users.get(packet.d.user_id));
-        }
-        if (packet.t === 'MESSAGE_REACTION_REMOVE') {
-            client.emit('messageReactionRemove', reaction, client.users.get(packet.d.user_id));
-        }
-    });
-});
+    let message = await channel.messages.fetch(packet.d.message_id)
+    // Emojis can have identifiers of name:id format, so we have to account for that case as well
+    const emoji = packet.d.emoji.id ? `${packet.d.emoji.name}:${packet.d.emoji.id}` : packet.d.emoji.name;
+    // This gives us the reaction we need to emit the event properly, in top of the message object
+    const reaction = await message.reactions.cache.get(emoji).fetch();
+    // Adds the currently reacting user to the reaction's users collection.
+    if (reaction) reaction.users.cache.set(packet.d.user_id, await client.users.fetch(packet.d.user_id));
+    // Check which type of event it is before emitting
+    if (packet.t === 'MESSAGE_REACTION_ADD') {
+        client.emit('messageReactionAdd', reaction, await client.users.fetch(packet.d.user_id));
+    }
+    if (packet.t === 'MESSAGE_REACTION_REMOVE') {
+        client.emit('messageReactionRemove', reaction, await client.users.fetch(packet.d.user_id));
+    }
+});*/
 
 async function postEventMsg() {
     console.log('Posting new raid message')
-    let channel = client.channels.get(raidSignupChannelId)
+    let channel = await client.channels.fetch(raidSignupChannelId)
     if(channel instanceof Discord.TextChannel){
-        await channel.fetchMessages();
+        await channel.messages.fetch();
         //Delete old messages
-        for(let message of channel.messages.values()) {
+        for(let message of (await channel.messages.fetch()).values()) {
             if(!message.pinned && message.author.id == client.user.id){
                 await message.delete();
             }
@@ -211,10 +213,10 @@ async function postEventMsg() {
 
 async function editEventMessages() {
     console.log('Editing raid messages')
-    let channel = client.channels.get(raidSignupChannelId)
+    let channel = await client.channels.fetch(raidSignupChannelId)
     if(channel instanceof Discord.TextChannel){
         //Create new messages
-        let messages = (await channel.fetchMessages()).sort((a, b) => a.createdTimestamp - b.createdTimestamp).array();
+        let messages = (await channel.messages.fetch()).sort((a, b) => a.createdTimestamp - b.createdTimestamp).array();
         for(let i = 0; i < events.length; i++){
             let actualIndex = await getMessageIndex(i, messages);
             let message = messages[actualIndex];
@@ -240,13 +242,13 @@ async function editEventMessages() {
 async function updateWhoIsJoining(message: Discord.Message){
     //clearTimeout(timer);
     //timer = setTimeout(async () => {
-        let channel = client.channels.get(raidSignupChannelId);
+        let channel = client.channels.cache.get(raidSignupChannelId);
         if(message.author.id != client.user.id){
             //Assume we cannot edit other peoples messages
             return;
         }
         if(channel instanceof Discord.TextChannel){
-            let overviewMessage = (await channel.fetchMessages({after: message.id, limit: 1})).first();
+            let overviewMessage = (await channel.messages.fetch({after: message.id, limit: 1})).first();
             let overviewText = await getOverview(message);
             overviewMessage.edit(overviewText.msg);
             console.log('Updated who is joining message');
@@ -272,16 +274,16 @@ async function postOverview(eventIndex: number) {
     let overviewMsg = await getOverviewFromIndex(eventIndex);
     if(overviewMsg !== undefined){
         // Find users who never responded'
-        let members = client.guilds.first().roles.get(membersRoleId).members
+        let members = (await client.guilds.cache.first().roles.fetch(membersRoleId)).members
             //Ignore users with roles defined in ignoreMembersWithRoles
-            .filter(user =>  user.roles.filter(role => ignoreMembersWithRoles.includes(role.id)).size == 0);
+            .filter(user =>  user.roles.cache.filter(role => ignoreMembersWithRoles.includes(role.id)).size == 0);
         overviewMsg.msg += `\n\nMembers who never responded: \n`;
         let reactionUsers = members.filter(user => !overviewMsg.users.has(user.id));
         overviewMsg.msg += reactionUsers
             .sort((a, b) => a.nickname.localeCompare(b.nickname))
             .map(user => user.displayName).join('\n') + "\n";
 
-        let overviewChannel = client.channels.get(raidOverviewChannelId);
+        let overviewChannel = client.channels.cache.get(raidOverviewChannelId);
         if(overviewChannel instanceof Discord.TextChannel){
             await overviewChannel.send(overviewMsg.msg);
         }
@@ -289,10 +291,12 @@ async function postOverview(eventIndex: number) {
         console.log('Could not get overviewMsg from index');
     }
 }
+
+
 async function getOverviewFromIndex(eventIndex: number): Promise<{msg: string, users: Discord.Collection<string, Discord.User>}> {
-    let channel = client.channels.get(raidSignupChannelId);
+    let channel = client.channels.cache.get(raidSignupChannelId);
     if(channel instanceof Discord.TextChannel){
-        let messages = (await channel.fetchMessages()).sort((a, b) => a.createdTimestamp - b.createdTimestamp).array();
+        let messages = (channel.messages.cache).sort((a, b) => a.createdTimestamp - b.createdTimestamp).array();
         let actualIndex = await getMessageIndex(eventIndex, messages);
         console.log('Actual msg index: '+actualIndex);
         let message = messages[actualIndex];
@@ -300,6 +304,7 @@ async function getOverviewFromIndex(eventIndex: number): Promise<{msg: string, u
         return await getOverview(message);
     }
 }
+
 async function getOverview(message: Discord.Message): Promise<{msg: string, users: Discord.Collection<string, Discord.User>}> {
     let overviewMsg = "**Who is joining:** \n\n";
     let users: Discord.Collection<string, Discord.User> = new Discord.Collection();
@@ -320,13 +325,17 @@ async function getOverview(message: Discord.Message): Promise<{msg: string, user
 
 async function getReactionOverview(message: Discord.Message, emoji: string, name?: string): Promise<{msg: string, users: Discord.Collection<string, Discord.User>}>{
     let result: string;
-    let reactions = await message.reactions.get(emoji);
-    if(reactions == null || reactions.count === 1){
+    let reaction = message.reactions.resolve(emoji.split(':')[1])
+    if(reaction == null) {
+        return {msg: '', users: new Discord.Collection()}; //Skip bot
+    }
+
+    if(reaction == null || reaction.users.cache.size === 1){
         return {msg: '', users: new Discord.Collection()}; //Skip bot
     }
     result = (name ? emoji : `<:${emoji}>`) + ' ' + (name ? name : emoji.split(':')[0]) + ': \n';
-    let reactionUsers = (await reactions.fetchUsers()).filter(user => user.id !== client.user.id);
-    reactionUsers.forEach(u => reactions.users.set(u.id, u));
+    let reactionUsers = reaction.users.cache.filter(user => user.id !== client.user.id);
+    //reactionUsers.forEach(u => reactions.users.set(u.id, u));
     result += reactionUsers
         .sort((a, b) => a.username.localeCompare(b.username))
         .map(user => `<@${user.id}>`).join('\n') + "\n\n";

@@ -4,7 +4,7 @@
   "description": "",
   "main": "index.ts",
   "scripts": {
-    "debug": "node --inspect-brk bot-discord.js",
+    "debug": "node --inspect-brk dist/bot-discord.js",
     "build": "tsc",
     "build-watch": "tsc -w"
   },
@@ -13,7 +13,7 @@
   "dependencies": {
     "@types/node-schedule": "^1.2.4",
     "bufferutil": "^4.0.1",
-    "discord.js": "^11.5.1",
+    "discord.js": "^12.5.1",
     "eris": "^0.10.1",
     "libsodium-wrappers": "^0.7.5",
     "moment": "^2.24.0",
